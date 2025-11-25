@@ -1,0 +1,188 @@
+{
+  "name": "Auto TikTok - Gemini & Replicate",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hours": 4
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "schedule-trigger",
+      "name": "A cada 4 Horas"
+    },
+    {
+      "parameters": {
+        "modelId": "gemini-pro",
+        "prompt": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Gere um prompt curto, descritivo e em INGLÊS para uma IA de vídeo (como Zeroscope ou Sora). \n\nO tema deve ser: Uma cena engraçada ou fofa aleatória (ex: animais fofos, falhas engraçadas simuladas, robôs atrapalhados).\n\nA saída deve ser APENAS o texto do prompt visual, sem introduções ou aspas."
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleGeminiChat",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "gemini-visual-prompt",
+      "name": "Gemini - Ideia Visual",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "zeroscope-v2-xl",
+        "prompt": "={{ $json.content }}",
+        "options": {
+          "num_frames": 24
+        }
+      },
+      "type": "n8n-nodes-base.replicate",
+      "typeVersion": 1,
+      "position": [
+        460,
+        0
+      ],
+      "id": "replicate-video",
+      "name": "Replicate - Gerar Vídeo",
+      "credentials": {
+        "replicateApi": {
+          "id": "YOUR_REPLICATE_CREDENTIAL_ID",
+          "name": "Replicate Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": "gemini-pro",
+        "prompt": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "={{ 'Crie uma legenda curta, engraçada e engajadora para o TikTok baseada nesta descrição de vídeo: ' + $('Gemini - Ideia Visual').item.json.content + '\n\nAdicione 3 hashtags populares. Responda em Português.' }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleGeminiChat",
+      "typeVersion": 1,
+      "position": [
+        680,
+        140
+      ],
+      "id": "gemini-caption",
+      "name": "Gemini - Legenda"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.ayrshare.com/api/post",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer SEU_TOKEN_AYRSHARE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "platforms",
+              "value": "[\"tiktok\"]"
+            },
+            {
+              "name": "mediaUrls",
+              "value": "={{ [$('Replicate - Gerar Vídeo').item.json] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        900,
+        0
+      ],
+      "id": "ayrshare-post",
+      "name": "Ayrshare - Postar"
+    }
+  ],
+  "connections": {
+    "A cada 4 Horas": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Ideia Visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Ideia Visual": {
+      "main": [
+        [
+          {
+            "node": "Replicate - Gerar Vídeo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gemini - Legenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replicate - Gerar Vídeo": {
+      "main": [
+        [
+          {
+            "node": "Ayrshare - Postar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Legenda": {
+      "main": [
+        [
+          {
+            "node": "Ayrshare - Postar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
