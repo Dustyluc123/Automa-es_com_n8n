@@ -1,0 +1,174 @@
+{
+  "name": "My workflow Whatsapp to Notion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "9b86bf5d-dc4b-4747-a585-a62519cd4894",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        96
+      ],
+      "id": "6c69cc96-1531-42eb-9eea-0fa4ea919236",
+      "name": "Webhook",
+      "webhookId": "9b86bf5d-dc4b-4747-a585-a62519cd4894",
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2e8e14e9-5216-4647-8977-a04fbdde866b",
+              "leftValue": "={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "120363268792120385@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "37d8d803-a5a9-4ffd-a5b6-851abd5a4b9e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2ab82409-9fbb-8024-bc02-f043b541952f",
+          "mode": "list",
+          "cachedResultName": "Arquivo WhatsApp",
+          "cachedResultUrl": "https://www.notion.so/2ab824099fbb8024bc02f043b541952f"
+        },
+        "title": "={{ $json.body.data.message.conversation }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Mensagem 1|rich_text",
+              "textContent": "={{ $json.body.data.pushName }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        -240
+      ],
+      "id": "b1e3c5b8-6d47-478b-b4c3-e5aede4d2794",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "hpuacWQFG7yMapZG",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        96
+      ],
+      "id": "7895227b-9ef2-4545-84a1-93d0d46162e8",
+      "name": "Create a database page1",
+      "credentials": {
+        "notionApi": {
+          "id": "hpuacWQFG7yMapZG",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "RyZzQ8Ww7g8He3tX",
+    "timeSavedPerExecution": 0
+  },
+  "versionId": "0e313c93-d81b-48ef-9e9e-e7918f7cb204",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a4dd5907033e0d9d3d5fab143ed763a25a23c96c4960a63ab65125ac7694f892"
+  },
+  "id": "RyZzQ8Ww7g8He3tX",
+  "tags": []
+}

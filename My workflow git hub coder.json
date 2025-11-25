@@ -1,0 +1,740 @@
+{
+  "name": "My workflow git hub coder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -288,
+        -16
+      ],
+      "id": "131de14a-656d-4e43-8bc6-7941886fe8f7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um Arquiteto de Software e Gerente de Projeto.\nO projeto é: **Construir um E-Commerce Full-Stack com apenas HTML/CSS/JS.**\n\nESTADO ATUAL DO PROJETO (Conteúdo do roadmap.md):\n{{ $node[\"Code in JavaScript\"].json.content }}\n\nSUA MISSÃO:\n1. Analise o estado atual. Se for \"INICIO_DO_PROJETO\", planeje o primeiro passo \n2. Determine a ÚNICA próxima tarefa lógica e necessária.\n3. Determine o nome exato do arquivo afetado.\n4. Determine o tipo de ação: \"CREATE\" ou \"MODIFY\".\nSe o Arquivo for listado como ja criado no roadmap.md\n\nVocê DEVE responder APENAS com um **JSON válido** no seguinte formato. Não inclua markdown (ex: ```json) ou explicações extras, apenas o JSON puro:\n{\n  \"task_description\": \"Descreva a tarefa em detalhes para o desenvolvedor.\",\n  \"target_file\": \"nome_do_arquivo_exato_com_extensao.py\",O target_file nunca deve ser o proprio roadmap \n  \"action_type\": \"CREATE\" ou \"MODIFY\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -16
+      ],
+      "id": "4a43478d-1a3b-4995-8a26-58f6d3561c83",
+      "name": "Google Gemini (Planner)",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "=roadmap.md",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        -16
+      ],
+      "id": "57f8eb58-2ec7-4301-826a-33ec617a9e52",
+      "name": "Get a file",
+      "webhookId": "d473eceb-d24c-4650-ae01-e06088833eac",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifica se o nó anterior retornou dados binários (o arquivo roadmap.md)\nif (items[0].binary && items[0].binary.data) {\n  try {\n    // O n8n guarda o arquivo na propriedade 'binary.data' (ou o nome que você definiu no nó anterior)\n    // Precisamos pegar esses dados (que já estão em Base64) e converter para texto.\n    \n    const binaryData = items[0].binary.data; // O objeto binário\n    const base64String = binaryData.data;    // A string base64\n    \n    // Converte de Base64 para Texto (UTF-8)\n    const decodedContent = Buffer.from(base64String, 'base64').toString('utf8');\n\n    return [{\n      json: {\n        roadmap_status: \"EXISTENTE\",\n        content: decodedContent\n      }\n    }];\n\n  } catch (error) {\n    // Se der erro na conversão, retornamos erro, mas com detalhes para ajudar\n    return [{\n      json: {\n        roadmap_status: \"ERRO\",\n        content: \"Erro ao ler o arquivo binário: \" + error.message\n      }\n    }];\n  }\n} \n\n// Se não houver dados binários E não houver erro explícito, \n// ou se o GitHub retornou erro 404 (arquivo não encontrado)\n// assumimos que é o início do projeto.\nreturn [{\n  json: {\n    roadmap_status: \"INICIO_DO_PROJETO\",\n    content: \"INICIO_DO_PROJETO\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "1174005c-91cf-4aca-82c7-d25d021b3bd7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c47d2d61-b534-4145-8559-55cc6b875943",
+              "leftValue": "={{ JSON.parse($json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).action_type }}",
+              "rightValue": "MODIFY",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        -16
+      ],
+      "id": "2b450285-3d65-4f83-83f5-b37d892ab90f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um Desenvolvedor Full Stack Sênior.\n\nTAREFA: {{ JSON.parse($json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description }}\nARQUIVO ALVO:\n{{ JSON.parse($json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file }}\n**CONTEXTO:** O arquivo alvo não existe e precisa ser criado do zero.\n\nGere o código COMPLETO do zero para a TAREFA, no arquivo \n{{ JSON.parse($json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file }}\nEm seguida, atualize o Roadmap marcando esta tarefa como CONCLUÍDA e listando a próxima tarefa.\n\nVocê DEVE responder APENAS com um JSON válido no seguinte formato. Não inclua markdown:\n{\n  \"code\": \"o codigo COMPLETO e FINAL para o novo arquivo...\",\n\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        208
+      ],
+      "id": "2b09e37a-70fc-4960-a9ee-7385e832087e",
+      "name": "Gemini (Coder - CREATE)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um Desenvolvedor Full Stack Sênior.\n\nTAREFA:\n{{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description}}\nARQUIVO ALVO: \n{{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file}}\n\nCONTEÚDO ATUAL (EXISTENTE) DO ARQUIVO:\n{{ $json.meu_arquivo }}\n\nCom base na TAREFA e no CONTEÚDO ATUAL, gere a **VERSÃO COMPLETA E FINAL** do arquivo. Você DEVE incluir o código antigo, mais as modificações necessárias.\nEm seguida, atualize o Roadmap marcando o que foi feito.\n\nVocê DEVE responder APENAS com um JSON válido no seguinte formato:\n{\n  \"code\": \"o codigo COMPLETO e FINAL para o arquivo...\",\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        848,
+        -144
+      ],
+      "id": "ce9a9650-bdee-4dbc-80eb-12415db08001",
+      "name": "Gemini (Coder - MODIFY)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "={{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file}}",
+        "fileContent": "={{JSON.parse($items(\"Gemini (Coder - CREATE)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).code}}",
+        "commitMessage": "=[FEATURE] - {{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description}}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        208
+      ],
+      "id": "1920d6c1-a6ac-4e88-ac54-0116056de47d",
+      "name": "GitHub (Salvar Código)",
+      "webhookId": "dd92acf2-746a-47f5-b5b6-060f1a912086",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "delete",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "={{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file}}",
+        "commitMessage": "=Delete - {{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file}}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        -144
+      ],
+      "id": "39e5da63-9b20-49a4-812d-3818b7738c4b",
+      "name": "Delete a file",
+      "webhookId": "a6175520-d49a-4847-9600-2abd5b3b9dec",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "delete",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "roadmap.md",
+        "commitMessage": "delete roadmap.md para recriar"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        64
+      ],
+      "id": "646f48ae-fd89-43ab-8ae3-df8c1fa1df5d",
+      "name": "Delete a file2",
+      "webhookId": "a6175520-d49a-4847-9600-2abd5b3b9dec",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "roadmap.md",
+        "fileContent": "=\n\n{{JSON.parse($items(\"Merge\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).updated_roadmap}}\n\n\n",
+        "commitMessage": "=[DOC] - Tarefa Concluída:"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        64
+      ],
+      "id": "037419da-67cd-4aae-928a-344cf2b30fec",
+      "name": "GitHub (Salvar Roadmap -create)",
+      "webhookId": "b731f56a-8f41-4be9-ae93-c16807280eee",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "={{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file}}",
+        "fileContent": "={{JSON.parse($items(\"Gemini (Coder - MODIFY)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).code}}",
+        "commitMessage": "=[FEATURE] - {{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description}}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1232,
+        -144
+      ],
+      "id": "4bb0a87c-6569-4cec-afd2-ee05532be435",
+      "name": "GitHub (Salvar Código-edit)",
+      "webhookId": "dd92acf2-746a-47f5-b5b6-060f1a912086",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1664,
+        64
+      ],
+      "id": "c0900d10-61fe-43c8-bd2b-3f096a0d4816",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um Desenvolvedor Full Stack Sênior.\n\nSUA TAREFA: Você sera o responsavel por atualizar o conteudo do roadmap listando tudo que foi feito\n\nA estrutura do RoadMap deve ser assim\nTarefas a fazer\nTarefas Feita\nLista de Todos os arquivos ja crido\n\nTudo tem que ser anotado aqui \nO conteudo do roadmap atual é:\n{{ $node[\"Code in JavaScript\"].json.content }}\n\nA tarefa que fizemos agora a ser anotada como ja feita é:\n{{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description}}\n\nOq foi adicionado no arquivo criado:\n\n{{JSON.parse($items(\"Gemini (Coder - CREATE)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).code}}\n\n\nVocê DEVE responder APENAS com um JSON válido no seguinte formato. Não inclua markdown:\n{\n  \"updated_roadmap\": \"o texto completo do roadmap.md, marcando a tarefa atual como CONCLUÍDA e listando a próxima tarefa.\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        208
+      ],
+      "id": "06c09a5b-65a5-42f5-9ea1-9c59581355f2",
+      "name": "Gemini (Coder - CREATE-Roadmap)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega o conteúdo em Base64 que veio do nó anterior\nconst base64Content = items[0].json.content;\n\n// Decodifica de Base64 para Texto (UTF-8)\nconst textoDecodificado = Buffer.from(base64Content, 'base64').toString('utf8');\n\n// Retorna o texto limpo em uma variável chamada 'meu_arquivo'\nreturn [{\n  json: {\n    meu_arquivo: textoDecodificado\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -144
+      ],
+      "id": "6b2f82b1-fc03-41b4-b25b-db86086eb05f",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "Dustyluc123",
+          "mode": "list",
+          "cachedResultName": "Dustyluc123",
+          "cachedResultUrl": "https://github.com/Dustyluc123"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "codigo-automatico-diario",
+          "mode": "list",
+          "cachedResultName": "codigo-automatico-diario",
+          "cachedResultUrl": "https://github.com/Dustyluc123/codigo-automatico-diario"
+        },
+        "filePath": "={{ JSON.parse($json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).target_file }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        -144
+      ],
+      "id": "89190f74-66f5-4550-8fda-d9f473aade3d",
+      "name": "Get a file1",
+      "webhookId": "d473eceb-d24c-4650-ae01-e06088833eac",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "Ez3DAthq1z6hXz94",
+          "name": "GitHub account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um Desenvolvedor Full Stack Sênior.\n\nSUA TAREFA: Você sera o responsavel por atualizar o conteudo do roadmap listando tudo que foi feito\n\nA estrutura do RoadMap deve ser assim\nTarefas a fazer\nTarefas Feita\nLista de Todos os arquivos ja crido\n\nTudo tem que ser anotado aqui \nO conteudo do roadmap atual é:\n{{ $node[\"Code in JavaScript\"].json.content }}\n\nA tarefa que fizemos agora a ser anotada como ja feita é:\n{{JSON.parse($items(\"Google Gemini (Planner)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).task_description}}\n\nOq foi adicionado no arquivo criado:\n{{JSON.parse($items(\"Gemini (Coder - MODIFY)\")[0].json.content.parts[0].text.replace('```json\\n', '').replace('\\n```', '')).code}}\n\n\nVocê DEVE responder APENAS com um JSON válido no seguinte formato. Não inclua markdown:\n{\n  \"updated_roadmap\": \"o texto completo do roadmap.md, marcando a tarefa atual como CONCLUÍDA e listando a próxima tarefa.\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -144
+      ],
+      "id": "3a53b7ea-e4c8-48d1-b459-44bdac83e16b",
+      "name": "Gemini (Coder - MODIFY-Roadmap)1",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Google Gemini (Planner)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini (Planner)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get a file1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini (Coder - CREATE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (Coder - CREATE)": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Salvar Código)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (Coder - MODIFY)": {
+      "main": [
+        [
+          {
+            "node": "Delete a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Salvar Código)": {
+      "main": [
+        [
+          {
+            "node": "Gemini (Coder - CREATE-Roadmap)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a file": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Salvar Código-edit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a file2": {
+      "main": [
+        [
+          {
+            "node": "GitHub (Salvar Roadmap -create)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Salvar Código-edit)": {
+      "main": [
+        [
+          {
+            "node": "Gemini (Coder - MODIFY-Roadmap)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub (Salvar Roadmap -create)": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Delete a file2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (Coder - CREATE-Roadmap)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Gemini (Coder - MODIFY)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (Coder - MODIFY-Roadmap)1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "America/Sao_Paulo",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "errorWorkflow": "inXJJlPjGp6kVXhS"
+  },
+  "versionId": "fe72d96e-9222-4df2-97f4-91f39206f6c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a4dd5907033e0d9d3d5fab143ed763a25a23c96c4960a63ab65125ac7694f892"
+  },
+  "id": "inXJJlPjGp6kVXhS",
+  "tags": []
+}

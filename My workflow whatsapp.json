@@ -1,0 +1,386 @@
+{
+  "name": "My workflow whatsapp",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7cfa7862-e824-4c62-aa5f-5ed3d0a27300",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "cityName": "Sao Paulo,BR",
+        "language": "pt-br"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "dc471500-a81c-4b2d-a213-fc05b815c736",
+      "name": "OpenWeatherMap",
+      "retryOnFail": true,
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "kvyS3pyl1MxpKsCo",
+          "name": "OpenWeatherMap account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nv2-evolution-api.szs4ly.easypanel.host/message/sendText/luc-api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"5511966358808\",\n  \"text\": \"{{ $node[\"GEMINI - SEM CHUVA\"].json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1488,
+        -128
+      ],
+      "id": "d218bd51-babe-4dd9-b914-d9d159ca81e9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        544,
+        0
+      ],
+      "id": "3bd60a31-56a1-40f2-b405-bf2ea4f998c1",
+      "name": "Dolar",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "eb2df76c-9fb4-4ad3-8f7a-6845899a688b",
+              "leftValue": "={{ $items(\"OpenWeatherMap\")[0].json.weather[0].description }}",
+              "rightValue": "rain",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        288
+      ],
+      "id": "c28239b4-bb90-4930-a090-1047981e6734",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        384,
+        0
+      ],
+      "id": "e3451c97-e37a-4ee6-848e-1cb670beaa63",
+      "name": "Bitcoin",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://g1.globo.com/rss/g1/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        16
+      ],
+      "id": "89916570-d3cb-4fa7-a7ff-0c46c1397f40",
+      "name": "Noticias",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nv2-evolution-api.szs4ly.easypanel.host/message/sendText/luc-api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"5511966358808\",\n  \"text\": \"{{ $node[\"GEMINI - SEM CHUVA\"].json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1536,
+        80
+      ],
+      "id": "bace9c28-ec54-40ef-b288-9ace4eaf31c6",
+      "name": "HTTP Request1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=`Você é um assistente matinal amigável e conciso chamado 'Sexta-feira' vai falar para minha namorada manu que esta em São Paulo me texto corrido.\nTEMPO BOM: Hoje não está chovendo.\nResuma as informações a seguir em uma mensagem de \"bom dia\" natural, em português do Brasil,\nSeja breve e direto.\nDADOS BRUTOS:\n- Clima (Descrição): {{ $items(\"OpenWeatherMap\")[0].json.weather[0].description }}\n- Clima (Temperatura): {{ $items(\"OpenWeatherMap\")[0].json.main.temp }}°C\n- Manchete Principal: {{ $items(\"Noticias\")[0].json[\"title\"] }}\n- Preço Bitcoin: R$ {{ $items(\"Bitcoin\")[0].json.bitcoin.brl }}\n- Preço Dólar: R$ {{ $items(\"Dolar\")[0].json.usd.brl }}\n`"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        96
+      ],
+      "id": "86fdfdd1-abc3-4762-b71c-ef6e99626478",
+      "name": "GEMINI - SEM CHUVA",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        928,
+        0
+      ],
+      "id": "eebf1d2c-37b9-4ea5-a1ab-55deffcf9ed3",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=`Você é um assistente matinal amigável e conciso chamado 'Sexta-feira'. A Manu minha Namorada que eu amo (seu usuário) está em São Paulo.\nTEMPO BOM: esta chovendo leva um gurda chuva\nResuma as informações a seguir em uma mensagem de \"bom dia\" natural, em português do Brasil.\nSeja breve e direto.\n\nDADOS BRUTOS:\n- Clima (Descrição): {{ $items(\"OpenWeatherMap\")[0].json.weather[0].description }}\n- Clima (Temperatura): {{ $items(\"OpenWeatherMap\")[0].json.main.temp }}°C\n- Manchete Principal: {{ $items(\"Noticias\")[0].json[\"title\"] }}\n- Preço Bitcoin: R$ {{ $items(\"Bitcoin\")[0].json.bitcoin.brl }}\n- Preço Dólar: R$ {{ $items(\"Dolar\")[0].json.usd.brl }}\n`"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        -112
+      ],
+      "id": "5d19923d-6530-44bb-85ac-c83d6b2bec56",
+      "name": "GEMINI - CHUVA",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mQWrxOXkOtdwJVrS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Bitcoin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dolar": {
+      "main": [
+        [
+          {
+            "node": "Noticias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bitcoin": {
+      "main": [
+        [
+          {
+            "node": "Dolar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "GEMINI - CHUVA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GEMINI - SEM CHUVA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Noticias": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GEMINI - SEM CHUVA": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GEMINI - CHUVA": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "8d4bb5ca-2671-44be-aaf6-9f926fd7a969",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a4dd5907033e0d9d3d5fab143ed763a25a23c96c4960a63ab65125ac7694f892"
+  },
+  "id": "tD2AVCqzwxtplv0u",
+  "tags": []
+}
